@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DwellGuard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #071A35;
+    --panel: #0F2646;
+    --panel-raised: #18385F;
+    --border: rgba(68, 93, 122, 0.45);
+    --border-strong: #445D7A;
+    --text: #FFF9EF;
+    --text-dim: rgba(255, 249, 239, 0.58);
+    --accent: #E8D6B6;
+    --accent-dim: rgba(232, 214, 182, 0.28);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--accent-dim); color: var(--text); }
+  a{ color: inherit; }
+
+  /* ---------- ambient background motion ---------- */
+
+  .ambient-glow{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .ambient-glow .blob{
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.16;
+    will-change: transform;
+  }
+
+  .blob-a{
+    width: 44vw;
+    height: 44vw;
+    top: -14%;
+    left: -10%;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    animation: dg-drift-a 17s ease-in-out infinite;
+  }
+
+  .blob-b{
+    width: 38vw;
+    height: 38vw;
+    bottom: -16%;
+    right: -8%;
+    background: radial-gradient(circle, #4C7BAE 0%, transparent 70%);
+    animation: dg-drift-b 21s ease-in-out infinite;
+  }
+
+  @keyframes dg-drift-a{
+    0%{ transform: translate(0, 0) scale(1); }
+    50%{ transform: translate(3.5vw, 3vh) scale(1.08); }
+    100%{ transform: translate(0, 0) scale(1); }
+  }
+
+  @keyframes dg-drift-b{
+    0%{ transform: translate(0, 0) scale(1); }
+    50%{ transform: translate(-3vw, -3.5vh) scale(1.06); }
+    100%{ transform: translate(0, 0) scale(1); }
+  }
+
+  /* ---------- desktop: lock to one viewport, no page scroll ---------- */
+
+  @media (min-width: 981px){
+    html, body{
+      height: 100vh;
+      overflow: hidden;
+    }
+    body{
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  /* ---------- top bar ---------- */
+
+  header.site{
+    flex-shrink: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(12px, 2vh, 20px) clamp(24px, 4vw, 48px);
+    background: rgba(7, 26, 53, 0.9);
+    backdrop-filter: blur(6px);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .wordmark{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .wordmark .mark{
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+    flex-shrink: 0;
+  }
+
+  .wordmark .brand-logo{
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .bg-watermark{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(46vw, 46vh);
+    height: min(46vw, 46vh);
+    color: var(--accent);
+    opacity: 0.07;
+    z-index: 0;
+    pointer-events: none;
+    animation: dg-watermark-glow 6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  @keyframes dg-watermark-glow{
+    0%{
+      opacity: 0.05;
+      filter: drop-shadow(0 0 0px var(--accent));
+    }
+    50%{
+      opacity: 0.16;
+      filter: drop-shadow(0 0 34px var(--accent));
+    }
+    100%{
+      opacity: 0.05;
+      filter: drop-shadow(0 0 0px var(--accent));
+    }
+  }
+
+  .wordmark .slash{
+    color: var(--accent);
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
+  nav.site{
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  nav.site a{ text-decoration: none; position: relative; padding-bottom: 4px; }
+  nav.site a:hover{ color: var(--accent); }
+
+  nav.site a.current{
+    color: var(--accent);
+    font-weight: 500;
+  }
+  nav.site a.current::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* ---------- main layout ---------- */
+
+  main.layout{
+    position: relative;
+    padding: clamp(16px, 3vh, 40px) clamp(24px, 4vw, 48px);
+  }
+
+  @media (min-width: 981px){
+    main.layout{
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1.5fr 0.85fr;
+      gap: clamp(24px, 3vw, 56px);
+      align-items: stretch;
+      overflow: hidden;
+    }
+  }
+
+  main.layout::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(232, 214, 182, 0.035) 0px,
+      rgba(232, 214, 182, 0.035) 1px,
+      transparent 1px,
+      transparent 64px
+    );
+    pointer-events: none;
+    animation: dg-hatch-drift 34s linear infinite;
+  }
+
+  @keyframes dg-hatch-drift{
+    from{ background-position: 0 0; }
+    to{ background-position: 256px 128px; }
+  }
+
+  .hero-shape{
+    position: absolute;
+    top: -10%;
+    right: -8%;
+    width: 420px;
+    height: 420px;
+    background: var(--panel-raised);
+    clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 0.45;
+    z-index: 0;
+    animation: dg-panel-breathe 8s ease-in-out infinite;
+  }
+
+  @keyframes dg-panel-breathe{
+    0%{ opacity: 0.38; }
+    50%{ opacity: 0.55; }
+    100%{ opacity: 0.38; }
+  }
+
+  /* ---------- left column ---------- */
+
+  .side-info{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  @media (min-width: 981px){
+    .side-info{ overflow-y: auto; padding-right: 4px; }
+  }
+
+  .hero-inner{ max-width: 640px; }
+
+  .hero .eyebrow{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 clamp(12px, 2vh, 24px);
+    padding: 6px 12px;
+    border: 1px solid var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .hero h1{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: clamp(28px, 4.4vh, 50px);
+    line-height: 1.08;
+    letter-spacing: -0.005em;
+    margin: 0 0 clamp(10px, 2vh, 22px);
+  }
+
+  .hero h1 span{ color: var(--accent); }
+
+  .hero p.lede{
+    font-size: clamp(13.5px, 1.7vh, 16px);
+    line-height: 1.6;
+    color: var(--text-dim);
+    max-width: 50ch;
+    margin: 0;
+  }
+
+  .hero-rule{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: clamp(16px, 2.6vh, 32px);
+  }
+  .hero-rule .bar{
+    width: 56px;
+    height: 4px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .hero-rule span{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .schematic{
+    width: 100%;
+    max-width: 420px;
+    margin: clamp(18px, 3vh, 34px) 0 0;
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    background: rgba(15, 38, 70, 0.4);
+    flex-shrink: 0;
+  }
+  .schematic svg{ width: 100%; height: auto; display: block; max-height: 12vh; }
+
+  .sequence{
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    margin: clamp(10px, 2vh, 18px) 0 0;
+    list-style: none;
+    max-width: 480px;
+  }
+
+  .sequence li{
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: clamp(8px, 1.4vh, 16px) 0;
+    border-top: 1px solid var(--border);
+  }
+  .sequence li:last-child{ border-bottom: 1px solid var(--border); }
+
+  .sequence .num{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--bg);
+    background: var(--accent);
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+  }
+
+  .sequence .label{
+    font-size: 13.5px;
+    color: var(--text);
+    padding-top: 3px;
+  }
+  .sequence .label span{
+    display: block;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    margin-top: 4px;
+    line-height: 1.45;
+  }
+
+  /* ---------- right: registration panel ---------- */
+
+  .plate{
+    position: relative;
+    z-index: 1;
+    padding: clamp(16px, 2.6vh, 28px) clamp(18px, 1.8vw, 26px) clamp(14px, 2vh, 22px);
+    background: var(--panel-raised);
+    border: 1px solid var(--border-strong);
+    clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    max-width: 380px;
+    margin-left: auto;
+  }
+
+  @media (min-width: 981px){
+    .plate{ overflow-y: auto; }
+  }
+
+  .plate .corner-tag{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    clip-path: polygon(100% 0, 100% 100%, 0 0);
+  }
+
+  .plate .eyebrow-small{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 clamp(8px, 1.4vh, 14px);
+  }
+
+  .plate h2{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: clamp(16px, 2vh, 19px);
+    margin: 0 0 6px;
+  }
+
+  .plate p.sub{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0 0 clamp(12px, 2.2vh, 24px);
+    line-height: 1.45;
+  }
+
+  .field{ margin-bottom: clamp(10px, 1.8vh, 18px); }
+
+  .field label{
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .field input{
+    width: 100%;
+    background: rgba(7, 26, 53, 0.55);
+    border: none;
+    border-bottom: 2px solid var(--border-strong);
+    color: var(--text);
+    font-size: 14px;
+    padding: 8px 4px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .field.mono input{
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+
+  .field input::placeholder{ color: rgba(255, 249, 239, 0.3); }
+
+  .field input:focus{
+    border-color: var(--accent);
+    background: rgba(232, 214, 182, 0.06);
+  }
+
+  .field .hint{
+    font-size: 11.5px;
+    color: rgba(255, 249, 239, 0.4);
+    margin-top: 8px;
+  }
+
+  button.register{
+    width: 100%;
+    padding: 11px 14px;
+    margin-top: 4px;
+    background: var(--accent);
+    border: none;
+    color: var(--bg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%);
+    transition: background 0.15s ease;
+  }
+  button.register:hover{ background: #FFF9EF; }
+  button.register:focus-visible{
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+  }
+
+  .plate .footnote{
+    margin-top: clamp(12px, 2.2vh, 22px);
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* ---------- footer ---------- */
+
+  footer.site{
+    flex-shrink: 0;
+    border-top: 2px solid var(--accent);
+    padding: 14px clamp(24px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 249, 239, 0.32);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- mobile: stack, allow natural scroll ---------- */
+
+  @media (max-width: 980px){
+    main.layout{
+      display: block;
+    }
+    .hero-shape{ display: none; }
+    .plate{ margin-top: 40px; max-width: 480px; margin-left: 0; margin-right: 0; }
+  }
+
+  @media (max-width: 640px){
+    header.site, main.layout, footer.site{ padding-left: 20px; padding-right: 20px; }
+    header.site{ padding-top: 16px; padding-bottom: 16px; }
+    main.layout{ padding-top: 32px; padding-bottom: 40px; }
+    .hero h1{ font-size: 32px; }
+    .hero p.lede{ font-size: 14.5px; }
+    nav.site{ display: none; }
+    .schematic svg{ max-height: none; }
+    footer.site{ flex-direction: column; gap: 6px; text-align: center; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+    .bg-watermark,
+    .ambient-glow .blob,
+    main.layout::before,
+    .hero-shape{
+      animation: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient-glow" aria-hidden="true">
+  <span class="blob blob-a"></span>
+  <span class="blob blob-b"></span>
+</div>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="dg-logo" viewBox="0 0 1500 1499.999933">
+    <defs><clipPath id="d604f7bbb1-shared"><path d="M 7.5 0 L 1492.5 0 L 1492.5 815 L 7.5 815 Z M 7.5 0 " clip-rule="nonzero"/></clipPath></defs>
+    <g clip-path="url(#d604f7bbb1-shared)"><path fill="currentColor" d="M 167.414062 604.527344 C 147.285156 537.511719 131.824219 467.628906 121.382812 396.523438 C 170.523438 389.242188 227.316406 373.640625 290.53125 350.03125 C 359.347656 324.324219 436.890625 288.875 521.03125 244.636719 C 621.296875 191.921875 708.175781 138.496094 749.78125 112.175781 C 749.855469 112.222656 749.925781 112.269531 750 112.320312 C 750.074219 112.269531 750.144531 112.222656 750.21875 112.175781 C 791.824219 138.496094 878.703125 191.921875 978.96875 244.636719 C 1063.109375 288.875 1140.652344 324.324219 1209.46875 350.03125 C 1272.683594 373.640625 1329.476562 389.242188 1378.617188 396.523438 C 1368.175781 467.628906 1352.714844 537.511719 1332.585938 604.527344 C 1310.902344 676.738281 1283.25 747.457031 1250.375 814.878906 C 1439.003906 610.496094 1492.5 304.585938 1492.5 304.585938 L 1436.359375 303.921875 C 1347.347656 302.886719 1206.378906 252.980469 1028.703125 159.609375 C 891.125 87.3125 780.425781 14.21875 779.328125 13.484375 L 750.21875 -5.796875 L 750 -5.648438 L 749.78125 -5.796875 L 720.671875 13.484375 C 719.574219 14.21875 608.875 87.3125 471.296875 159.609375 C 293.621094 252.980469 152.652344 302.886719 63.636719 303.921875 L 7.5 304.585938 C 7.5 304.585938 60.996094 610.496094 249.625 814.878906 C 216.75 747.457031 189.109375 676.738281 167.414062 604.527344 " fill-opacity="1" fill-rule="nonzero"/></g>
+    <path fill="currentColor" d="M 750.21875 1385.207031 C 750.144531 1385.160156 750.074219 1385.113281 750 1385.0625 C 749.925781 1385.113281 749.855469 1385.160156 749.78125 1385.207031 C 428.015625 1179.0625 153.398438 765.277344 100.820312 686.058594 C 118.789062 737.292969 139.207031 787.511719 161.878906 836.1875 C 224.335938 970.265625 304.824219 1095.214844 401.097656 1207.578125 C 486.816406 1307.617188 569.535156 1379.035156 623.855469 1421.34375 C 683.609375 1467.898438 723.15625 1490.601562 724.820312 1491.542969 L 749.78125 1505.792969 L 750 1505.660156 L 750.21875 1505.792969 L 775.179688 1491.542969 C 776.84375 1490.601562 816.390625 1467.898438 876.144531 1421.34375 C 930.464844 1379.035156 1013.183594 1307.617188 1098.902344 1207.578125 C 1195.175781 1095.214844 1275.664062 970.265625 1338.121094 836.1875 C 1360.792969 787.511719 1381.210938 737.292969 1399.179688 686.058594 C 1346.601562 765.277344 1071.984375 1179.0625 750.21875 1385.207031 " fill-opacity="1" fill-rule="nonzero"/>
+    <g fill="currentColor" fill-opacity="1"><g transform="translate(260.908076, 902.725244)"><g><path d="M 585.203125 -291.59375 C 585.203125 -249.46875 577.929688 -210.601562 563.390625 -175 C 548.859375 -139.394531 528.394531 -108.59375 502 -82.59375 C 475.601562 -56.59375 443.800781 -36.328125 406.59375 -21.796875 C 369.394531 -7.265625 328.128906 0 282.796875 0 L 56.40625 0 L 56.40625 -582.796875 L 282.796875 -582.796875 C 328.128906 -582.796875 369.394531 -575.460938 406.59375 -560.796875 C 443.800781 -546.128906 475.601562 -525.863281 502 -500 C 528.394531 -474.132812 548.859375 -443.398438 563.390625 -407.796875 C 577.929688 -372.203125 585.203125 -333.46875 585.203125 -291.59375 Z M 446.796875 -291.59375 C 446.796875 -320.394531 443.0625 -346.394531 435.59375 -369.59375 C 428.132812 -392.800781 417.40625 -412.46875 403.40625 -428.59375 C 389.40625 -444.726562 372.269531 -457.128906 352 -465.796875 C 331.726562 -474.460938 308.660156 -478.796875 282.796875 -478.796875 L 192.40625 -478.796875 L 192.40625 -104 L 282.796875 -104 C 308.660156 -104 331.726562 -108.332031 352 -117 C 372.269531 -125.664062 389.40625 -138.066406 403.40625 -154.203125 C 417.40625 -170.335938 428.132812 -190.003906 435.59375 -213.203125 C 443.0625 -236.398438 446.796875 -262.53125 446.796875 -291.59375 Z M 446.796875 -291.59375 "/></g></g></g>
+    <g fill="currentColor" fill-opacity="1"><g transform="translate(648.590951, 1058.999889)"><g><path d="M 336.40625 -302 L 543.59375 -302 L 543.59375 -56 C 513.726562 -34.132812 481.925781 -18.265625 448.1875 -8.390625 C 414.457031 1.472656 379.195312 6.40625 342.40625 6.40625 C 294.40625 6.40625 250.738281 -1.125 211.40625 -16.1875 C 172.070312 -31.257812 138.40625 -52.0625 110.40625 -78.59375 C 82.40625 -105.132812 60.800781 -136.601562 45.59375 -173 C 30.394531 -209.394531 22.796875 -248.925781 22.796875 -291.59375 C 22.796875 -335.0625 29.992188 -374.992188 44.390625 -411.390625 C 58.796875 -447.796875 79.398438 -479.195312 106.203125 -505.59375 C 133.003906 -532 165.40625 -552.535156 203.40625 -567.203125 C 241.40625 -581.867188 283.867188 -589.203125 330.796875 -589.203125 C 355.066406 -589.203125 377.867188 -587.203125 399.203125 -583.203125 C 420.535156 -579.203125 440.203125 -573.734375 458.203125 -566.796875 C 476.203125 -559.867188 492.664062 -551.601562 507.59375 -542 C 522.53125 -532.394531 535.863281 -521.992188 547.59375 -510.796875 L 508.40625 -451.203125 C 502.269531 -441.867188 494.332031 -436.132812 484.59375 -434 C 474.863281 -431.863281 464.398438 -434.265625 453.203125 -441.203125 C 442.535156 -447.597656 432.46875 -453.128906 423 -457.796875 C 413.53125 -462.460938 403.863281 -466.257812 394 -469.1875 C 384.132812 -472.125 373.734375 -474.257812 362.796875 -475.59375 C 351.867188 -476.925781 339.601562 -477.59375 326 -477.59375 C 300.664062 -477.59375 277.863281 -473.125 257.59375 -464.1875 C 237.332031 -455.257812 220.066406 -442.660156 205.796875 -426.390625 C 191.535156 -410.128906 180.535156 -390.597656 172.796875 -367.796875 C 165.066406 -344.992188 161.203125 -319.59375 161.203125 -291.59375 C 161.203125 -260.664062 165.46875 -233.203125 174 -209.203125 C 182.53125 -185.203125 194.59375 -164.929688 210.1875 -148.390625 C 225.789062 -131.859375 244.457031 -119.257812 266.1875 -110.59375 C 287.925781 -101.925781 312 -97.59375 338.40625 -97.59375 C 354.664062 -97.59375 369.394531 -99.191406 382.59375 -102.390625 C 395.800781 -105.597656 408.671875 -109.867188 421.203125 -115.203125 L 421.203125 -203.59375 L 363.59375 -203.59375 C 355.0625 -203.59375 348.394531 -205.859375 343.59375 -210.390625 C 338.800781 -214.929688 336.40625 -220.664062 336.40625 -227.59375 Z M 336.40625 -302 "/></g></g></g>
+  </symbol>
+</svg>
+
+<header class="site">
+  <div class="wordmark">
+    <svg class="brand-logo" viewBox="0 0 1500 1499.999933"><use href="#dg-logo"/></svg>
+    dwellguard<span class="slash">/registry</span>
+  </div>
+  <nav class="site">
+    <a href="index.html" class="current" aria-current="page">Register</a>
+    <a href="devices.html">Device</a>
+    <a href="/login.html" id="logout">Log out</a>
+  </nav>
+</header>
+
+<main class="layout">
+  <div class="hero-shape" aria-hidden="true"></div>
+  <svg class="bg-watermark" viewBox="0 0 1500 1499.999933" aria-hidden="true"><use href="#dg-logo"/></svg>
+
+  <div class="side-info">
+    <div class="hero-inner">
+      <p class="eyebrow">// device onboarding</p>
+      <h1>PROTECT YOUR HOME<br>WITH <span>DWELLGUARD.</span></h1>
+      <p class="lede">Give it a name and its unique ID, and it's yours to monitor, update, and manage from here on.</p>
+      <div class="hero-rule">
+        <div class="bar"></div>
+        <span>FOLLOW THE STEPS TO REGISTER YOUR DEVICE AT HOME.</span>
+      </div>
+    </div>
+
+    <div class="schematic" aria-hidden="true">
+      <svg viewBox="0 0 420 180" xmlns="http://www.w3.org/2000/svg">
+        <rect x="30" y="20" width="160" height="110" rx="2" fill="none" stroke="#445D7A" stroke-width="1.5"/>
+        <circle cx="55" cy="45" r="4" fill="none" stroke="#E8D6B6" stroke-width="1.5"/>
+        <line x1="70" y1="45" x2="160" y2="45" stroke="#445D7A" stroke-width="1.5"/>
+        <line x1="45" y1="70" x2="175" y2="70" stroke="#445D7A" stroke-width="1.5"/>
+        <line x1="45" y1="90" x2="140" y2="90" stroke="#445D7A" stroke-width="1.5"/>
+        <rect x="45" y="105" width="30" height="16" fill="none" stroke="#445D7A" stroke-width="1.5"/>
+        <rect x="90" y="105" width="30" height="16" fill="none" stroke="#445D7A" stroke-width="1.5"/>
+        <path d="M190 75 H 250" stroke="#E8D6B6" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <rect x="250" y="45" width="140" height="65" rx="2" fill="none" stroke="#445D7A" stroke-width="1.5"/>
+        <text x="270" y="80" font-family="IBM Plex Mono, monospace" font-size="11" fill="#FFF9EF" fill-opacity="0.6">DEV-4F2A-9B7C</text>
+        <circle cx="255" cy="50" r="2.5" fill="#E8D6B6"/>
+      </svg>
+    </div>
+
+    <ul class="sequence">
+      <li>
+        <span class="num">01</span>
+        <span class="label">Enter the device's name and unique ID<span>Both fields on the right, filled in from the device's label or manual.</span></span>
+      </li>
+      <li>
+        <span class="num">02</span>
+        <span class="label">The ID registers the device itself and connects it<span>No separate activation step — the ID does both.</span></span>
+      </li>
+      <li>
+        <span class="num">03</span>
+        <span class="label">The device appears in your list<span>Ready to configure, monitor, and update.</span></span>
+      </li>
+    </ul>
+  </div>
+
+  <form class="plate">
+    <span class="corner-tag" aria-hidden="true"></span>
+    <p class="eyebrow-small">// new entry</p>
+    <h2>Register a device</h2>
+    <p class="sub">This adds the device to your account. You can rename or remove it at any time.</p>
+
+    <div class="field">
+      <label for="device-name">Device name</label>
+      <input type="text" id="device-name" name="device-name" placeholder="Living room sensor" autocomplete="off">
+    </div>
+
+    <div class="field mono">
+      <label for="unique-id">Unique ID</label>
+      <input type="text" id="unique-id" name="unique-id" placeholder="DEV-4F2A-9B7C" autocomplete="off">
+      <p class="hint">Printed on the device's underside or in its manual.</p>
+    </div>
+
+    <button type="submit" class="register">Register device</button>
+
+    <p class="footnote">Need to register several devices? Contact support for bulk import.</p>
+  </form>
+
+</main>
+
+<footer class="site">
+  <span>Dwellguard</span>
+  <span>v1.0</span>
+</footer>
+
+<script>
+  document.getElementById('logout').addEventListener('click', async e => {
+    e.preventDefault();
+    try { await fetch('/api/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
+    window.location.href = '/login.html';
+  });
+</script>
+
+</body>
+</html>

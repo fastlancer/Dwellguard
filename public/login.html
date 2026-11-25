@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DwellGuard — Log in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #071A35;
+    --panel: #0F2646;
+    --panel-raised: #18385F;
+    --border: rgba(68, 93, 122, 0.45);
+    --border-strong: #445D7A;
+    --text: #FFF9EF;
+    --text-dim: rgba(255, 249, 239, 0.58);
+    --accent: #E8D6B6;
+    --accent-dim: rgba(232, 214, 182, 0.28);
+    --alert: #F2A28C;
+  }
+
+  *{ box-sizing: border-box; }
+  [hidden]{ display: none !important; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection{ background: var(--accent-dim); color: var(--text); }
+
+  body{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(232, 214, 182, 0.035) 0px,
+      rgba(232, 214, 182, 0.035) 1px,
+      transparent 1px,
+      transparent 64px
+    );
+    pointer-events: none;
+  }
+
+  .hero-shape{
+    position: absolute;
+    top: -8%;
+    right: -6%;
+    width: 440px;
+    height: 440px;
+    background: var(--panel-raised);
+    clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .bg-watermark{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(60vw, 60vh);
+    height: min(60vw, 60vh);
+    color: var(--accent);
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  main{
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+
+  .stack{
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wordmark{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 26px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .wordmark svg{ width: 26px; height: 26px; color: var(--accent); }
+
+  /* ---------- plate ---------- */
+
+  .plate{
+    position: relative;
+    width: 100%;
+    padding: 32px 32px 30px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border-strong);
+    clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 24px 100%, 0 calc(100% - 24px));
+  }
+
+  .corner-tag{
+    position: absolute;
+    top: 0; right: 0;
+    width: 24px; height: 24px;
+    background: var(--accent);
+    clip-path: polygon(100% 0, 100% 100%, 0 0);
+  }
+
+  .eyebrow-small{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+
+  /* tabs */
+
+  .tabs{
+    display: flex;
+    gap: 26px;
+    border-bottom: 1px solid var(--border-strong);
+    margin: 0 0 26px;
+    position: relative;
+  }
+  .tabs button{
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 12px;
+    cursor: pointer;
+  }
+  .tabs button[aria-selected="true"]{ color: var(--text); }
+  .tabs button:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tab-indicator{
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    transition: transform 0.22s ease, width 0.22s ease;
+  }
+
+  .plate h2{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: 20px;
+    margin: 0 0 6px;
+  }
+  .plate p.sub{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 0 0 26px;
+    line-height: 1.5;
+  }
+
+  form.auth-form{ display: none; }
+  form.auth-form.active{ display: block; }
+
+  .field{ margin-bottom: 20px; }
+  .field label{
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .input-row{ position: relative; }
+
+  .field input{
+    width: 100%;
+    background: rgba(7, 26, 53, 0.55);
+    border: none;
+    border-bottom: 2px solid var(--border-strong);
+    color: var(--text);
+    font-size: 14.5px;
+    padding: 11px 4px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .field input::placeholder{ color: rgba(255, 249, 239, 0.3); }
+  .field input:focus{ border-color: var(--accent); background: rgba(232, 214, 182, 0.06); }
+  .field.password input{ padding-right: 40px; }
+
+  .field.invalid input{ border-color: var(--alert); }
+  .error-text{ display: none; font-size: 12px; color: var(--alert); margin: 7px 0 0; }
+  .field.invalid .error-text{ display: block; }
+
+  .toggle-visibility{
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+  }
+  .toggle-visibility:hover{ color: var(--accent); }
+  .toggle-visibility svg{ width: 17px; height: 17px; }
+
+  button.submit{
+    width: 100%;
+    padding: 14px;
+    margin-top: 6px;
+    background: var(--accent);
+    border: none;
+    color: var(--bg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%);
+    transition: background 0.15s ease;
+  }
+  button.submit:hover, button.submit:focus-visible{ background: #FFF9EF; outline: none; }
+
+  .form-msg{
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin: 0 0 14px;
+    padding: 9px 12px;
+    border-left: 3px solid var(--alert);
+    color: var(--alert);
+    background: rgba(242, 162, 140, 0.08);
+  }
+  .form-msg.ok{
+    border-left-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232, 214, 182, 0.08);
+  }
+  button.submit:disabled{ opacity: 0.5; cursor: wait; }
+
+  .switch-note{
+    margin: 22px 0 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .switch-note button{
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  footer.site{
+    position: relative;
+    z-index: 1;
+    border-top: 2px solid var(--accent);
+    padding: 14px clamp(24px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 249, 239, 0.32);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  @media (max-width: 640px){
+    .plate{ padding: 28px 22px 26px; }
+    .hero-shape{ display: none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="dg-logo" viewBox="0 0 1500 1499.999933">
+    <defs><clipPath id="d604f7bbb1-shared"><path d="M 7.5 0 L 1492.5 0 L 1492.5 815 L 7.5 815 Z M 7.5 0 " clip-rule="nonzero"/></clipPath></defs>
+    <g clip-path="url(#d604f7bbb1-shared)"><path fill="currentColor" d="M 167.414062 604.527344 C 147.285156 537.511719 131.824219 467.628906 121.382812 396.523438 C 170.523438 389.242188 227.316406 373.640625 290.53125 350.03125 C 359.347656 324.324219 436.890625 288.875 521.03125 244.636719 C 621.296875 191.921875 708.175781 138.496094 749.78125 112.175781 C 749.855469 112.222656 749.925781 112.269531 750 112.320312 C 750.074219 112.269531 750.144531 112.222656 750.21875 112.175781 C 791.824219 138.496094 878.703125 191.921875 978.96875 244.636719 C 1063.109375 288.875 1140.652344 324.324219 1209.46875 350.03125 C 1272.683594 373.640625 1329.476562 389.242188 1378.617188 396.523438 C 1368.175781 467.628906 1352.714844 537.511719 1332.585938 604.527344 C 1310.902344 676.738281 1283.25 747.457031 1250.375 814.878906 C 1439.003906 610.496094 1492.5 304.585938 1492.5 304.585938 L 1436.359375 303.921875 C 1347.347656 302.886719 1206.378906 252.980469 1028.703125 159.609375 C 891.125 87.3125 780.425781 14.21875 779.328125 13.484375 L 750.21875 -5.796875 L 750 -5.648438 L 749.78125 -5.796875 L 720.671875 13.484375 C 719.574219 14.21875 608.875 87.3125 471.296875 159.609375 C 293.621094 252.980469 152.652344 302.886719 63.636719 303.921875 L 7.5 304.585938 C 7.5 304.585938 60.996094 610.496094 249.625 814.878906 C 216.75 747.457031 189.109375 676.738281 167.414062 604.527344 " fill-opacity="1" fill-rule="nonzero"/></g>
+    <path fill="currentColor" d="M 750.21875 1385.207031 C 750.144531 1385.160156 750.074219 1385.113281 750 1385.0625 C 749.925781 1385.113281 749.855469 1385.160156 749.78125 1385.207031 C 428.015625 1179.0625 153.398438 765.277344 100.820312 686.058594 C 118.789062 737.292969 139.207031 787.511719 161.878906 836.1875 C 224.335938 970.265625 304.824219 1095.214844 401.097656 1207.578125 C 486.816406 1307.617188 569.535156 1379.035156 623.855469 1421.34375 C 683.609375 1467.898438 723.15625 1490.601562 724.820312 1491.542969 L 749.78125 1505.792969 L 750 1505.660156 L 750.21875 1505.792969 L 775.179688 1491.542969 C 776.84375 1490.601562 816.390625 1467.898438 876.144531 1421.34375 C 930.464844 1379.035156 1013.183594 1307.617188 1098.902344 1207.578125 C 1195.175781 1095.214844 1275.664062 970.265625 1338.121094 836.1875 C 1360.792969 787.511719 1381.210938 737.292969 1399.179688 686.058594 C 1346.601562 765.277344 1071.984375 1179.0625 750.21875 1385.207031 " fill-opacity="1" fill-rule="nonzero"/>
+    <g fill="currentColor" fill-opacity="1"><g transform="translate(260.908076, 902.725244)"><g><path d="M 585.203125 -291.59375 C 585.203125 -249.46875 577.929688 -210.601562 563.390625 -175 C 548.859375 -139.394531 528.394531 -108.59375 502 -82.59375 C 475.601562 -56.59375 443.800781 -36.328125 406.59375 -21.796875 C 369.394531 -7.265625 328.128906 0 282.796875 0 L 56.40625 0 L 56.40625 -582.796875 L 282.796875 -582.796875 C 328.128906 -582.796875 369.394531 -575.460938 406.59375 -560.796875 C 443.800781 -546.128906 475.601562 -525.863281 502 -500 C 528.394531 -474.132812 548.859375 -443.398438 563.390625 -407.796875 C 577.929688 -372.203125 585.203125 -333.46875 585.203125 -291.59375 Z M 446.796875 -291.59375 C 446.796875 -320.394531 443.0625 -346.394531 435.59375 -369.59375 C 428.132812 -392.800781 417.40625 -412.46875 403.40625 -428.59375 C 389.40625 -444.726562 372.269531 -457.128906 352 -465.796875 C 331.726562 -474.460938 308.660156 -478.796875 282.796875 -478.796875 L 192.40625 -478.796875 L 192.40625 -104 L 282.796875 -104 C 308.660156 -104 331.726562 -108.332031 352 -117 C 372.269531 -125.664062 389.40625 -138.066406 403.40625 -154.203125 C 417.40625 -170.335938 428.132812 -190.003906 435.59375 -213.203125 C 443.0625 -236.398438 446.796875 -262.53125 446.796875 -291.59375 Z M 446.796875 -291.59375 "/></g></g></g>
+    <g fill="currentColor" fill-opacity="1"><g transform="translate(648.590951, 1058.999889)"><g><path d="M 336.40625 -302 L 543.59375 -302 L 543.59375 -56 C 513.726562 -34.132812 481.925781 -18.265625 448.1875 -8.390625 C 414.457031 1.472656 379.195312 6.40625 342.40625 6.40625 C 294.40625 6.40625 250.738281 -1.125 211.40625 -16.1875 C 172.070312 -31.257812 138.40625 -52.0625 110.40625 -78.59375 C 82.40625 -105.132812 60.800781 -136.601562 45.59375 -173 C 30.394531 -209.394531 22.796875 -248.925781 22.796875 -291.59375 C 22.796875 -335.0625 29.992188 -374.992188 44.390625 -411.390625 C 58.796875 -447.796875 79.398438 -479.195312 106.203125 -505.59375 C 133.003906 -532 165.40625 -552.535156 203.40625 -567.203125 C 241.40625 -581.867188 283.867188 -589.203125 330.796875 -589.203125 C 355.066406 -589.203125 377.867188 -587.203125 399.203125 -583.203125 C 420.535156 -579.203125 440.203125 -573.734375 458.203125 -566.796875 C 476.203125 -559.867188 492.664062 -551.601562 507.59375 -542 C 522.53125 -532.394531 535.863281 -521.992188 547.59375 -510.796875 L 508.40625 -451.203125 C 502.269531 -441.867188 494.332031 -436.132812 484.59375 -434 C 474.863281 -431.863281 464.398438 -434.265625 453.203125 -441.203125 C 442.535156 -447.597656 432.46875 -453.128906 423 -457.796875 C 413.53125 -462.460938 403.863281 -466.257812 394 -469.1875 C 384.132812 -472.125 373.734375 -474.257812 362.796875 -475.59375 C 351.867188 -476.925781 339.601562 -477.59375 326 -477.59375 C 300.664062 -477.59375 277.863281 -473.125 257.59375 -464.1875 C 237.332031 -455.257812 220.066406 -442.660156 205.796875 -426.390625 C 191.535156 -410.128906 180.535156 -390.597656 172.796875 -367.796875 C 165.066406 -344.992188 161.203125 -319.59375 161.203125 -291.59375 C 161.203125 -260.664062 165.46875 -233.203125 174 -209.203125 C 182.53125 -185.203125 194.59375 -164.929688 210.1875 -148.390625 C 225.789062 -131.859375 244.457031 -119.257812 266.1875 -110.59375 C 287.925781 -101.925781 312 -97.59375 338.40625 -97.59375 C 354.664062 -97.59375 369.394531 -99.191406 382.59375 -102.390625 C 395.800781 -105.597656 408.671875 -109.867188 421.203125 -115.203125 L 421.203125 -203.59375 L 363.59375 -203.59375 C 355.0625 -203.59375 348.394531 -205.859375 343.59375 -210.390625 C 338.800781 -214.929688 336.40625 -220.664062 336.40625 -227.59375 Z M 336.40625 -302 "/></g></g></g>
+  </symbol>
+</svg>
+
+<div class="hero-shape" aria-hidden="true"></div>
+<svg class="bg-watermark" viewBox="0 0 1500 1499.999933" aria-hidden="true"><use href="#dg-logo"/></svg>
+
+<main>
+  <div class="stack">
+    <div class="wordmark">
+      <svg viewBox="0 0 1500 1499.999933" aria-hidden="true"><use href="#dg-logo"/></svg>
+      dwellguard
+    </div>
+
+    <div class="plate">
+      <span class="corner-tag" aria-hidden="true"></span>
+
+      <p class="eyebrow-small">// account access</p>
+
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-login" aria-selected="true" aria-controls="form-login">Log in</button>
+        <button type="button" role="tab" id="tab-register" aria-selected="false" aria-controls="form-register">Create account</button>
+        <span class="tab-indicator" id="tab-indicator"></span>
+      </div>
+
+      <!-- LOG IN -->
+      <form class="auth-form active" id="form-login" novalidate>
+        <h2>Welcome back</h2>
+        <p class="sub">Log in to monitor and control your DwellGuard device.</p>
+
+        <div class="field" data-field="login-email">
+          <label for="login-email">Email</label>
+          <div class="input-row">
+            <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+          </div>
+          <p class="error-text">Enter a valid email address.</p>
+        </div>
+
+        <div class="field password" data-field="login-password">
+          <label for="login-password">Password</label>
+          <div class="input-row">
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="toggle-visibility" data-target="login-password" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <p class="error-text">Enter your password.</p>
+        </div>
+
+        <p class="form-msg" id="login-msg" role="alert" hidden></p>
+        <button type="submit" class="submit">Log in</button>
+        <p class="switch-note">No account yet? <button type="button" data-switch="register">Create one</button></p>
+      </form>
+
+      <!-- CREATE ACCOUNT -->
+      <form class="auth-form" id="form-register" novalidate>
+        <h2>Create your account</h2>
+        <p class="sub">You'll use this to monitor and control your DwellGuard device.</p>
+
+        <div class="field" data-field="reg-name">
+          <label for="reg-name">Full name</label>
+          <div class="input-row">
+            <input type="text" id="reg-name" placeholder="Jordan Reyes" autocomplete="name">
+          </div>
+          <p class="error-text">Enter your name.</p>
+        </div>
+
+        <div class="field" data-field="reg-email">
+          <label for="reg-email">Email</label>
+          <div class="input-row">
+            <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email">
+          </div>
+          <p class="error-text">Enter a valid email address.</p>
+        </div>
+
+        <div class="field password" data-field="reg-password">
+          <label for="reg-password">Password</label>
+          <div class="input-row">
+            <input type="password" id="reg-password" placeholder="At least 8 characters" autocomplete="new-password">
+            <button type="button" class="toggle-visibility" data-target="reg-password" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <p class="error-text">Password must be at least 8 characters.</p>
+        </div>
+
+        <div class="field password" data-field="reg-confirm">
+          <label for="reg-confirm">Confirm password</label>
+          <div class="input-row">
+            <input type="password" id="reg-confirm" placeholder="••••••••" autocomplete="new-password">
+            <button type="button" class="toggle-visibility" data-target="reg-confirm" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <p class="error-text">Passwords don't match.</p>
+        </div>
+
+        <p class="form-msg" id="reg-msg" role="alert" hidden></p>
+        <button type="submit" class="submit">Create account</button>
+        <p class="switch-note">Already have an account? <button type="button" data-switch="login">Log in</button></p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <span>Dwellguard</span>
+  <span>v1.0</span>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  const tabLogin = $('#tab-login'), tabRegister = $('#tab-register');
+  const formLogin = $('#form-login'), formRegister = $('#form-register');
+  const indicator = $('#tab-indicator');
+
+  function moveIndicator(el){
+    indicator.style.width = el.offsetWidth + 'px';
+    indicator.style.transform = `translateX(${el.offsetLeft}px)`;
+  }
+
+  function showTab(name){
+    const login = name === 'login';
+    tabLogin.setAttribute('aria-selected', String(login));
+    tabRegister.setAttribute('aria-selected', String(!login));
+    formLogin.classList.toggle('active', login);
+    formRegister.classList.toggle('active', !login);
+    moveIndicator(login ? tabLogin : tabRegister);
+  }
+
+  tabLogin.addEventListener('click', () => showTab('login'));
+  tabRegister.addEventListener('click', () => showTab('register'));
+  $$('[data-switch]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.switch)));
+  window.addEventListener('resize', () => moveIndicator(tabLogin.getAttribute('aria-selected') === 'true' ? tabLogin : tabRegister));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveIndicator(tabLogin));
+  moveIndicator(tabLogin);
+
+  // show / hide password
+  $$('.toggle-visibility').forEach(btn => btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.target);
+    const hidden = input.type === 'password';
+    input.type = hidden ? 'text' : 'password';
+    btn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+  }));
+
+  // front-end validation only
+  const setInvalid = (key, bad) => $(`[data-field="${key}"]`).classList.toggle('invalid', bad);
+  const isEmail = v => /\S+@\S+\.\S+/.test(v);
+
+  $$('.field input').forEach(i => i.addEventListener('input', () => i.closest('.field').classList.remove('invalid')));
+
+  function showMsg(el, text, ok){
+    el.textContent = text || '';
+    el.classList.toggle('ok', !!ok);
+    el.hidden = !text;
+  }
+
+  // POST JSON to the DwellGuard server (same origin, so the session cookie is sent automatically)
+  async function post(path, body){
+    try {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, error: data.error };
+    } catch (err) {
+      return { ok: false, error: 'Cannot reach the server. Check the connection and try again.' };
+    }
+  }
+
+  async function submitForm(form, msgEl, path, body, onSuccess){
+    const btn = $('.submit', form);
+    btn.disabled = true;
+    showMsg(msgEl, '');
+    const result = await post(path, body);
+    btn.disabled = false;
+    if (result.ok) onSuccess();
+    else showMsg(msgEl, result.error || 'Something went wrong. Please try again.');
+  }
+
+  formLogin.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = $('#login-email').value.trim();
+    const password = $('#login-password').value;
+    const badEmail = !isEmail(email);
+    const badPass = !password;
+    setInvalid('login-email', badEmail);
+    setInvalid('login-password', badPass);
+    if (badEmail || badPass) return;
+
+    submitForm(formLogin, $('#login-msg'), '/api/login', { email, password }, () => {
+      window.location.href = '/devices.html';
+    });
+  });
+
+  formRegister.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#reg-name').value.trim();
+    const email = $('#reg-email').value.trim();
+    const password = $('#reg-password').value;
+    const bad = {
+      'reg-name': !name,
+      'reg-email': !isEmail(email),
+      'reg-password': password.length < 8,
+      'reg-confirm': !$('#reg-confirm').value || $('#reg-confirm').value !== password
+    };
+    Object.keys(bad).forEach(k => setInvalid(k, bad[k]));
+    if (Object.values(bad).some(Boolean)) return;
+
+    submitForm(formRegister, $('#reg-msg'), '/api/register', { name, email, password }, () => {
+      formRegister.reset();
+      $('#login-email').value = email;
+      showTab('login');
+      showMsg($('#login-msg'), 'Account created. Log in to continue.', true);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

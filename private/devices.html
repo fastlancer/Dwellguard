@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DwellGuard — Device</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #071A35;
+    --panel: #0F2646;
+    --panel-raised: #18385F;
+    --border: rgba(68, 93, 122, 0.45);
+    --border-strong: #445D7A;
+    --text: #FFF9EF;
+    --text-dim: rgba(255, 249, 239, 0.58);
+    --accent: #E8D6B6;
+    --accent-dim: rgba(232, 214, 182, 0.28);
+    --good: #B7D9A8;
+    --alert: #F2A28C;
+  }
+
+  *{ box-sizing: border-box; }
+  [hidden]{ display: none !important; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--accent-dim); color: var(--text); }
+  a{ color: inherit; }
+
+  @media (min-width: 981px){
+    html, body{ height: 100vh; overflow: hidden; }
+    body{ display: flex; flex-direction: column; }
+  }
+
+  /* ---------- top bar ---------- */
+
+  header.site{
+    flex-shrink: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(12px, 2vh, 20px) clamp(24px, 4vw, 48px);
+    background: rgba(7, 26, 53, 0.9);
+    backdrop-filter: blur(6px);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .wordmark{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .wordmark .brand-logo{ width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
+  .wordmark .slash{ color: var(--accent); font-weight: 400; opacity: 0.7; }
+
+  .bg-watermark{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(40vw, 40vh);
+    height: min(40vw, 40vh);
+    color: var(--accent);
+    opacity: 0.05;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  nav.site{
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  nav.site a{ text-decoration: none; position: relative; padding-bottom: 4px; }
+  nav.site a:hover{ color: var(--accent); }
+  nav.site a.current{ color: var(--accent); font-weight: 500; }
+  nav.site a.current::after{
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* ---------- main layout ---------- */
+
+  main.layout{
+    position: relative;
+    padding: clamp(16px, 3vh, 32px) clamp(24px, 4vw, 48px);
+  }
+
+  @media (min-width: 981px){
+    main.layout{
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+
+  main.layout::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(232, 214, 182, 0.035) 0px,
+      rgba(232, 214, 182, 0.035) 1px,
+      transparent 1px,
+      transparent 64px
+    );
+    pointer-events: none;
+  }
+
+  .hero-shape{
+    position: absolute;
+    top: -10%;
+    right: -8%;
+    width: 380px;
+    height: 380px;
+    background: var(--panel-raised);
+    clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 0.4;
+    z-index: 0;
+  }
+
+  /* ---------- device header ---------- */
+
+  .device-header{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    margin-bottom: clamp(14px, 2.2vh, 24px);
+  }
+
+  .device-header .eyebrow{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+    padding: 6px 12px;
+    border: 1px solid var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .device-header h1{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: clamp(22px, 3.4vh, 34px);
+    line-height: 1.08;
+    margin: 0 0 6px;
+  }
+
+  .device-header .device-id{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+    margin: 0;
+  }
+
+  .status-group{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .status-pill, .mode-pill{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 10px 100%);
+    flex-shrink: 0;
+    color: var(--good);
+    border: 1px solid var(--good);
+  }
+  .status-pill .dot, .mode-pill .dot{
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+  .status-pill[data-online="false"]{ color: var(--alert); border-color: var(--alert); }
+
+  .mode-pill{ color: var(--good); border-color: var(--good); }
+  .mode-pill[data-mode="maintenance"]{ color: var(--accent); border-color: var(--accent); }
+  .mode-pill[data-mode="sleep"]{ color: var(--text-dim); border-color: var(--border-strong); }
+
+  .demo-chip{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border: 1px dashed var(--border-strong);
+    padding: 6px 10px;
+  }
+
+  /* ---------- mode tabs ---------- */
+
+  .tabs{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-bottom: clamp(12px, 2vh, 22px);
+    flex-wrap: wrap;
+  }
+
+  .tab-btn{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    color: var(--text-dim);
+    padding: 10px 22px 10px 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 14px 100%);
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+
+  .tab-btn .num{
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0;
+    color: var(--bg);
+    background: var(--border-strong);
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+    transition: background 0.15s ease;
+  }
+
+  .tab-btn .tab-live{
+    display: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--good);
+  }
+  .tab-btn[data-active="true"] .tab-live{ display: inline; }
+
+  .tab-btn:hover{ color: var(--text); border-color: var(--accent); }
+  .tab-btn[aria-selected="true"]{ color: var(--text); border-color: var(--accent); background: var(--panel-raised); }
+  .tab-btn[aria-selected="true"] .num{ background: var(--accent); }
+
+  /* ---------- panels ---------- */
+
+  .panels{
+    position: relative;
+    z-index: 1;
+    min-height: 0;
+    flex: 1;
+  }
+
+  .panel{
+    display: none;
+    height: 100%;
+    min-height: 0;
+    gap: clamp(12px, 1.6vw, 20px);
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .panel.active{ display: grid; }
+
+  .panel[data-panel="auto"].active{
+    grid-template-columns: 1.1fr 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "dash log" "recs log";
+  }
+  .panel[data-panel="maintenance"].active{
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "bar bar" "sens act";
+  }
+  .panel[data-panel="sleep"].active{
+    grid-template-columns: 0.85fr 1.15fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "ctrl dash" "slog log";
+  }
+
+  .slot{ display: contents; }
+
+  .dashboard{ grid-area: dash; }
+  .datalog{ grid-area: log; }
+  .recs{ grid-area: recs; }
+  .maint-bar{ grid-area: bar; }
+  .sens{ grid-area: sens; }
+  .act{ grid-area: act; }
+  .sleep-ctrl{ grid-area: ctrl; }
+  .sleep-log{ grid-area: slog; }
+
+  /* ---------- cards ---------- */
+
+  .card{
+    position: relative;
+    background: var(--panel-raised);
+    border: 1px solid var(--border-strong);
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    padding: clamp(14px, 2.2vh, 22px) clamp(16px, 1.8vw, 24px);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-head{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: clamp(10px, 1.6vh, 16px);
+  }
+
+  .card h2{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .card .meta{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+  }
+  .card .meta b{ color: var(--accent); font-weight: 500; }
+
+  .group-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 8px;
+  }
+
+  .hold-banner{
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--accent);
+    background: rgba(232, 214, 182, 0.08);
+    border-left: 3px solid var(--accent);
+    padding: 9px 12px;
+    margin-bottom: 14px;
+  }
+
+  /* ---------- live dashboard ---------- */
+
+  .tiles{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 10px;
+    margin-bottom: clamp(12px, 2vh, 18px);
+  }
+
+  .tile{
+    position: relative;
+    background: rgba(7, 26, 53, 0.55);
+    border: 1px solid var(--border);
+    padding: 11px 12px 11px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .tile::before{
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--border-strong);
+  }
+  .tile[data-state="ok"]::before{ background: var(--good); }
+  .tile[data-state="warn"]::before{ background: var(--accent); }
+  .tile[data-state="alert"]::before{ background: var(--alert); }
+
+  .tile .cap, .out .cap{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .tile .val{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(20px, 3vh, 26px);
+    color: var(--accent);
+    line-height: 1.1;
+  }
+  .tile .val.text{ font-size: clamp(14px, 2vh, 17px); letter-spacing: 0.04em; padding: 4px 0; }
+  .tile[data-state="alert"] .val{ color: var(--alert); }
+  .tile .note{ font-size: 12px; color: var(--text-dim); }
+
+  .outs{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .out{
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .out .val{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-dim);
+  }
+  .out .val::before{
+    content: "";
+    width: 8px; height: 8px;
+    background: var(--border-strong);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    flex-shrink: 0;
+  }
+  .out[data-on="true"] .val{ color: var(--accent); }
+  .out[data-on="true"] .val::before{ background: var(--accent); }
+
+  .dashboard.held .tile .val{ opacity: 0.45; }
+  .dashboard.held .tile::before{ background: var(--border-strong); }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap{
+    flex: 1;
+    min-height: 140px;
+    overflow: auto;
+    border-top: 1px solid var(--border);
+  }
+
+  table{ width: 100%; border-collapse: collapse; }
+  th{
+    position: sticky;
+    top: 0;
+    background: var(--panel-raised);
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 400;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  td{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 9px 8px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tr.danger td{ color: var(--alert); }
+  tr.empty td{
+    text-align: center;
+    color: rgba(255, 249, 239, 0.35);
+    padding: 24px 8px;
+    white-space: normal;
+  }
+
+  /* ---------- recommendations ---------- */
+
+  .rec-list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    min-height: 90px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+  }
+  .rec{
+    display: flex;
+    gap: 12px;
+    padding: 11px 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rec-mark{
+    width: 9px; height: 9px;
+    margin-top: 5px;
+    flex-shrink: 0;
+    background: var(--text-dim);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  }
+  .rec[data-level="ok"] .rec-mark{ background: var(--good); }
+  .rec[data-level="warn"] .rec-mark{ background: var(--accent); }
+  .rec[data-level="alert"] .rec-mark{ background: var(--alert); }
+  .rec-title{ font-size: 13.5px; color: var(--text); }
+  .rec[data-level="alert"] .rec-title{ color: var(--alert); }
+  .rec-text{ font-size: 12.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
+  .rec-empty{
+    list-style: none;
+    text-align: center;
+    padding: 22px 2px;
+    color: rgba(255, 249, 239, 0.35);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* ---------- buttons / controls ---------- */
+
+  .btn{
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 11px 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 10px 100%);
+    transition: background 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn:hover:not(:disabled), .btn:focus-visible{ background: #FFF9EF; outline: none; }
+  .btn.ghost{ background: var(--border-strong); color: var(--text); }
+  .btn.ghost:hover:not(:disabled), .btn.ghost:focus-visible{ background: #5a7596; }
+  .btn.small{ padding: 7px 14px; font-size: 11px; }
+  .btn:disabled{ opacity: 0.35; cursor: not-allowed; }
+
+  .seg{ display: inline-flex; border: 1px solid var(--border-strong); }
+  .seg-btn{
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    cursor: pointer;
+  }
+  .seg-btn.on{ background: var(--accent); color: var(--bg); }
+  .seg-btn:disabled{ cursor: not-allowed; }
+
+  input[type="range"]{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-strong);
+    outline: none;
+    margin: 10px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    width: 14px; height: 18px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width: 14px; height: 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+  }
+  input[type="range"]:disabled{ opacity: 0.5; }
+  input[type="range"]:disabled::-webkit-slider-thumb{ background: var(--border-strong); cursor: not-allowed; }
+
+  /* ---------- maintenance ---------- */
+
+  .maint-bar{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .maint-bar .state{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    margin: 4px 0 0;
+  }
+  .maint-bar .note{ font-size: 12.5px; color: var(--text-dim); margin: 6px 0 0; max-width: 62ch; line-height: 1.5; }
+  .note:empty, .hint:empty{ display: none; }
+
+  .lockable.locked .list{ opacity: 0.45; }
+  .lock-tag{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .lockable:not(.locked) .lock-tag{ display: none; }
+
+  .list{ border-top: 1px solid var(--border); flex: 1; min-height: 0; overflow-y: auto; }
+
+  .chk-row, .act-row{
+    display: grid;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chk-row{ grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; }
+  .chk-row .name, .act-row .name{ font-size: 13.5px; }
+  .chk-val{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--accent);
+  }
+  .chk-when, .act-cmd{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .act-row{ grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; }
+  .act-row .controls{ display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .act-row .fan-line{ display: flex; align-items: center; gap: 12px; width: 100%; }
+  .act-row .fan-line .range-wrap{ flex: 1; min-width: 80px; }
+  .fan-val{ font-family: 'IBM Plex Mono', monospace; font-size: 12px; width: 40px; text-align: right; color: var(--accent); }
+
+  /* ---------- sleep ---------- */
+
+  .sleep-status{ margin-bottom: 16px; }
+  .state-big{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(26px, 4vh, 38px);
+    color: var(--good);
+    line-height: 1.1;
+  }
+  .state-big::before{
+    content: "";
+    width: 12px; height: 12px;
+    background: currentColor;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  }
+  .sleep-status[data-asleep="true"] .state-big{ color: var(--text-dim); }
+  .state-sub{
+    display: block;
+    margin-top: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  .btn-row{ display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .hint{ font-size: 12px; color: var(--text-dim); line-height: 1.5; margin: 0 0 8px; }
+  .hint.warn{ color: var(--accent); }
+
+  .toast{
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 60;
+    max-width: 90vw;
+    background: var(--panel-raised);
+    border: 1px solid var(--alert);
+    color: var(--text);
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+
+  /* ---------- footer ---------- */
+
+  footer.site{
+    flex-shrink: 0;
+    border-top: 2px solid var(--accent);
+    padding: 14px clamp(24px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 249, 239, 0.32);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- responsive ---------- */
+
+  @media (max-width: 980px){
+    main.layout{ display: block; }
+    .hero-shape{ display: none; }
+    .panel.active{ display: flex !important; flex-direction: column; overflow: visible; }
+    .card{ grid-area: auto !important; min-height: 0; }
+    .table-wrap{ max-height: 320px; flex: none; }
+    .rec-list{ flex: none; }
+    .list{ flex: none; }
+  }
+
+  @media (max-width: 640px){
+    header.site, main.layout, footer.site{ padding-left: 20px; padding-right: 20px; }
+    header.site{ padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; gap: 10px 16px; }
+    .wordmark{ font-size: 14px; letter-spacing: 0.1em; }
+    main.layout{ padding-top: 24px; padding-bottom: 32px; }
+    .device-header h1{ font-size: 26px; }
+    nav.site{ gap: 16px; font-size: 11.5px; letter-spacing: 0.06em; }
+    .tab-btn{ width: 100%; }
+    .outs{ grid-template-columns: 1fr; }
+    .chk-row{ grid-template-columns: 1fr 1fr; }
+    .act-row{ grid-template-columns: 1fr; }
+    footer.site{ flex-direction: column; gap: 6px; text-align: center; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="dg-logo" viewBox="0 0 1500 1499.999933">
+    <defs><clipPath id="d604f7bbb1-shared"><path d="M 7.5 0 L 1492.5 0 L 1492.5 815 L 7.5 815 Z M 7.5 0 " clip-rule="nonzero"/></clipPath></defs>
+    <g clip-path="url(#d604f7bbb1-shared)"><path fill="currentColor" d="M 167.414062 604.527344 C 147.285156 537.511719 131.824219 467.628906 121.382812 396.523438 C 170.523438 389.242188 227.316406 373.640625 290.53125 350.03125 C 359.347656 324.324219 436.890625 288.875 521.03125 244.636719 C 621.296875 191.921875 708.175781 138.496094 749.78125 112.175781 C 749.855469 112.222656 749.925781 112.269531 750 112.320312 C 750.074219 112.269531 750.144531 112.222656 750.21875 112.175781 C 791.824219 138.496094 878.703125 191.921875 978.96875 244.636719 C 1063.109375 288.875 1140.652344 324.324219 1209.46875 350.03125 C 1272.683594 373.640625 1329.476562 389.242188 1378.617188 396.523438 C 1368.175781 467.628906 1352.714844 537.511719 1332.585938 604.527344 C 1310.902344 676.738281 1283.25 747.457031 1250.375 814.878906 C 1439.003906 610.496094 1492.5 304.585938 1492.5 304.585938 L 1436.359375 303.921875 C 1347.347656 302.886719 1206.378906 252.980469 1028.703125 159.609375 C 891.125 87.3125 780.425781 14.21875 779.328125 13.484375 L 750.21875 -5.796875 L 750 -5.648438 L 749.78125 -5.796875 L 720.671875 13.484375 C 719.574219 14.21875 608.875 87.3125 471.296875 159.609375 C 293.621094 252.980469 152.652344 302.886719 63.636719 303.921875 L 7.5 304.585938 C 7.5 304.585938 60.996094 610.496094 249.625 814.878906 C 216.75 747.457031 189.109375 676.738281 167.414062 604.527344 " fill-opacity="1" fill-rule="nonzero"/></g>
+    <path fill="currentColor" d="M 750.21875 1385.207031 C 750.144531 1385.160156 750.074219 1385.113281 750 1385.0625 C 749.925781 1385.113281 749.855469 1385.160156 749.78125 1385.207031 C 428.015625 1179.0625 153.398438 765.277344 100.820312 686.058594 C 118.789062 737.292969 139.207031 787.511719 161.878906 836.1875 C 224.335938 970.265625 304.824219 1095.214844 401.097656 1207.578125 C 486.816406 1307.617188 569.535156 1379.035156 623.855469 1421.34375 C 683.609375 1467.898438 723.15625 1490.601562 724.820312 1491.542969 L 749.78125 1505.792969 L 750 1505.660156 L 750.21875 1505.792969 L 775.179688 1491.542969 C 776.84375 1490.601562 816.390625 1467.898438 876.144531 1421.34375 C 930.464844 1379.035156 1013.183594 1307.617188 1098.902344 1207.578125 C 1195.175781 1095.214844 1275.664062 970.265625 1338.121094 836.1875 C 1360.792969 787.511719 1381.210938 737.292969 1399.179688 686.058594 C 1346.601562 765.277344 1071.984375 1179.0625 750.21875 1385.207031 " fill-opacity="1" fill-rule="nonzero"/>
+    <g fill="currentColor" fill-opacity="1"><g transform="translate(260.908076, 902.725244)"><g><path d="M 585.203125 -291.59375 C 585.203125 -249.46875 577.929688 -210.601562 563.390625 -175 C 548.859375 -139.394531 528.394531 -108.59375 502 -82.59375 C 475.601562 -56.59375 443.800781 -36.328125 406.59375 -21.796875 C 369.394531 -7.265625 328.128906 0 282.796875 0 L 56.40625 0 L 56.40625 -582.796875 L 282.796875 -582.796875 C 328.128906 -582.796875 369.394531 -575.460938 406.59375 -560.796875 C 443.800781 -546.128906 475.601562 -525.863281 502 -500 C 528.394531 -474.132812 548.859375 -443.398438 563.390625 -407.796875 C 577.929688 -372.203125 585.203125 -333.46875 585.203125 -291.59375 Z M 446.796875 -291.59375 C 446.796875 -320.394531 443.0625 -346.394531 435.59375 -369.59375 C 428.132812 -392.800781 417.40625 -412.46875 403.40625 -428.59375 C 389.40625 -444.726562 372.269531 -457.128906 352 -465.796875 C 331.726562 -474.460938 308.660156 -478.796875 282.796875 -478.796875 L 192.40625 -478.796875 L 192.40625 -104 L 282.796875 -104 C 308.660156 -104 331.726562 -108.332031 352 -117 C 372.269531 -125.664062 389.40625 -138.066406 403.40625 -154.203125 C 417.40625 -170.335938 428.132812 -190.003906 435.59375 -213.203125 C 443.0625 -236.398438 446.796875 -262.53125 446.796875 -291.59375 Z M 446.796875 -291.59375 "/></g></g></g>
+    <g fill="currentColor" fill-opacity="1"><g transform="translate(648.590951, 1058.999889)"><g><path d="M 336.40625 -302 L 543.59375 -302 L 543.59375 -56 C 513.726562 -34.132812 481.925781 -18.265625 448.1875 -8.390625 C 414.457031 1.472656 379.195312 6.40625 342.40625 6.40625 C 294.40625 6.40625 250.738281 -1.125 211.40625 -16.1875 C 172.070312 -31.257812 138.40625 -52.0625 110.40625 -78.59375 C 82.40625 -105.132812 60.800781 -136.601562 45.59375 -173 C 30.394531 -209.394531 22.796875 -248.925781 22.796875 -291.59375 C 22.796875 -335.0625 29.992188 -374.992188 44.390625 -411.390625 C 58.796875 -447.796875 79.398438 -479.195312 106.203125 -505.59375 C 133.003906 -532 165.40625 -552.535156 203.40625 -567.203125 C 241.40625 -581.867188 283.867188 -589.203125 330.796875 -589.203125 C 355.066406 -589.203125 377.867188 -587.203125 399.203125 -583.203125 C 420.535156 -579.203125 440.203125 -573.734375 458.203125 -566.796875 C 476.203125 -559.867188 492.664062 -551.601562 507.59375 -542 C 522.53125 -532.394531 535.863281 -521.992188 547.59375 -510.796875 L 508.40625 -451.203125 C 502.269531 -441.867188 494.332031 -436.132812 484.59375 -434 C 474.863281 -431.863281 464.398438 -434.265625 453.203125 -441.203125 C 442.535156 -447.597656 432.46875 -453.128906 423 -457.796875 C 413.53125 -462.460938 403.863281 -466.257812 394 -469.1875 C 384.132812 -472.125 373.734375 -474.257812 362.796875 -475.59375 C 351.867188 -476.925781 339.601562 -477.59375 326 -477.59375 C 300.664062 -477.59375 277.863281 -473.125 257.59375 -464.1875 C 237.332031 -455.257812 220.066406 -442.660156 205.796875 -426.390625 C 191.535156 -410.128906 180.535156 -390.597656 172.796875 -367.796875 C 165.066406 -344.992188 161.203125 -319.59375 161.203125 -291.59375 C 161.203125 -260.664062 165.46875 -233.203125 174 -209.203125 C 182.53125 -185.203125 194.59375 -164.929688 210.1875 -148.390625 C 225.789062 -131.859375 244.457031 -119.257812 266.1875 -110.59375 C 287.925781 -101.925781 312 -97.59375 338.40625 -97.59375 C 354.664062 -97.59375 369.394531 -99.191406 382.59375 -102.390625 C 395.800781 -105.597656 408.671875 -109.867188 421.203125 -115.203125 L 421.203125 -203.59375 L 363.59375 -203.59375 C 355.0625 -203.59375 348.394531 -205.859375 343.59375 -210.390625 C 338.800781 -214.929688 336.40625 -220.664062 336.40625 -227.59375 Z M 336.40625 -302 "/></g></g></g>
+  </symbol>
+</svg>
+
+<header class="site">
+  <div class="wordmark">
+    <svg class="brand-logo" viewBox="0 0 1500 1499.999933"><use href="#dg-logo"/></svg>
+    dwellguard<span class="slash">/device</span>
+  </div>
+  <nav class="site">
+    <a href="devices.html" class="current" aria-current="page">Device</a>
+    <a href="/login.html" id="logout">Log out</a>
+  </nav>
+</header>
+
+<main class="layout">
+  <div class="hero-shape" aria-hidden="true"></div>
+  <svg class="bg-watermark" viewBox="0 0 1500 1499.999933" aria-hidden="true"><use href="#dg-logo"/></svg>
+
+  <div class="device-header">
+    <div>
+      <p class="eyebrow">// your device</p>
+      <h1 id="device-name">Living room sensor</h1>
+      <p class="device-id" id="device-id">DEV-4F2A-9B7C</p>
+    </div>
+    <div class="status-group">
+      <span class="status-pill" id="online-pill" data-online="true"><span class="dot"></span><span id="online-text">Online</span></span>
+      <span class="mode-pill" id="mode-pill" data-mode="auto"><span class="dot"></span>Mode: <span id="mode-pill-text">AUTO</span></span>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Device mode">
+    <button class="tab-btn" role="tab" data-panel="auto" aria-selected="true">
+      <span class="num">01</span>Auto<span class="tab-live">● active</span>
+    </button>
+    <button class="tab-btn" role="tab" data-panel="maintenance" aria-selected="false">
+      <span class="num">02</span>Maintenance<span class="tab-live">● active</span>
+    </button>
+    <button class="tab-btn" role="tab" data-panel="sleep" aria-selected="false">
+      <span class="num">03</span>Sleep<span class="tab-live">● active</span>
+    </button>
+  </div>
+
+  <div class="panels">
+
+    <!-- ================= AUTO ================= -->
+    <section class="panel active" data-panel="auto" role="tabpanel">
+      <div class="slot" data-slot="dashboard"></div>
+      <section class="card recs">
+        <div class="card-head">
+          <h2>Recommendations</h2>
+          <span class="meta">Based on the latest readings</span>
+        </div>
+        <ul class="rec-list" id="rec-list">
+          <li class="rec-empty">Recommendations will appear once readings arrive.</li>
+        </ul>
+      </section>
+      <div class="slot" data-slot="datalog"></div>
+    </section>
+
+    <!-- ================= MAINTENANCE ================= -->
+    <section class="panel" data-panel="maintenance" role="tabpanel" hidden>
+      <section class="card maint-bar">
+        <div>
+          <p class="group-label" style="margin:0">// maintenance mode</p>
+          <p class="state" id="maint-state">OFF — automatic operation running</p>
+          <p class="note" data-bind="maintNote"></p>
+          <p class="note">Check each sensor and test each output device. Automatic operation pauses while maintenance mode is on.</p>
+        </div>
+        <button class="btn" id="btn-maint" type="button">Start maintenance</button>
+      </section>
+
+      <section class="card lockable locked sens">
+        <div class="card-head">
+          <h2>Sensor check</h2>
+          <span class="lock-tag">Locked — start maintenance mode</span>
+          <button class="btn small ghost" id="btn-read-all" type="button">Read all</button>
+        </div>
+        <div class="list">
+          <div class="chk-row" data-check="dist">
+            <span class="name">Ultrasonic distance</span>
+            <span class="chk-val">—</span>
+            <span class="chk-when">Not checked yet</span>
+            <button class="btn small" type="button" data-read="dist">Read now</button>
+          </div>
+          <div class="chk-row" data-check="temp">
+            <span class="name">Temperature</span>
+            <span class="chk-val">—</span>
+            <span class="chk-when">Not checked yet</span>
+            <button class="btn small" type="button" data-read="temp">Read now</button>
+          </div>
+          <div class="chk-row" data-check="hum">
+            <span class="name">Humidity</span>
+            <span class="chk-val">—</span>
+            <span class="chk-when">Not checked yet</span>
+            <button class="btn small" type="button" data-read="hum">Read now</button>
+          </div>
+          <div class="chk-row" data-check="gas">
+            <span class="name">Gas sensor</span>
+            <span class="chk-val">—</span>
+            <span class="chk-when">Not checked yet</span>
+            <button class="btn small" type="button" data-read="gas">Read now</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card lockable locked act">
+        <div class="card-head">
+          <h2>Actuator control</h2>
+          <span class="lock-tag">Locked — start maintenance mode</span>
+        </div>
+        <div class="list">
+          <div class="act-row">
+            <div>
+              <div class="name">Alarm buzzer</div>
+              <div class="act-cmd" data-cmd="buzzer">No command sent yet</div>
+            </div>
+            <div class="controls">
+              <div class="seg" data-actuator="buzzer">
+                <button class="seg-btn" type="button" data-val="0">Off</button>
+                <button class="seg-btn" type="button" data-val="1">On</button>
+              </div>
+            </div>
+          </div>
+          <div class="act-row">
+            <div>
+              <div class="name">Servo position</div>
+              <div class="act-cmd" data-cmd="servo">No command sent yet</div>
+            </div>
+            <div class="controls">
+              <div class="fan-line">
+                <div class="range-wrap"><input type="range" id="servo-range" min="0" max="180" step="5" value="0" aria-label="Servo angle"></div>
+                <span class="fan-val" id="servo-val">0°</span>
+              </div>
+              <button class="btn small" type="button" id="btn-servo-send">Send angle</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ================= SLEEP ================= -->
+    <section class="panel" data-panel="sleep" role="tabpanel" hidden>
+      <section class="card sleep-ctrl">
+        <div class="card-head">
+          <h2>Sleep control</h2>
+        </div>
+        <div class="sleep-status" id="sleep-status" data-asleep="false">
+          <span class="state-big" data-bind="sleepState">AWAKE</span>
+          <span class="state-sub" data-bind="sleepChanged">No change recorded yet</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btn-sleep" type="button">Sleep command</button>
+          <button class="btn ghost" id="btn-wake" type="button" disabled>Wake command</button>
+        </div>
+        <p class="hint warn" data-bind="sleepNote"></p>
+        <p class="hint">Only the Arduino sleeps. The ESP module stays awake to listen for commands and wakes the Arduino through its interrupt pin. Waking returns the device to AUTO.</p>
+      </section>
+
+      <section class="card sleep-log">
+        <div class="card-head">
+          <h2>Sleep log</h2>
+          <span class="meta">Every sleep period</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sleep start</th><th>Wake time</th><th>Duration</th></tr></thead>
+            <tbody id="sleep-log-body"><tr class="empty"><td colspan="3">No sleep periods recorded yet.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="slot" data-slot="dashboard"></div>
+      <div class="slot" data-slot="datalog"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site">
+  <span>Dwellguard</span>
+  <span>v1.0</span>
+</footer>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- ============ shared components (cloned into AUTO and SLEEP) ============ -->
+
+<template id="tpl-dashboard">
+  <section class="card dashboard" data-dashboard>
+    <div class="card-head">
+      <h2>Live dashboard</h2>
+      <span class="meta" data-bind="updated">Waiting for data…</span>
+    </div>
+    <div class="hold-banner" data-hold-banner hidden></div>
+
+    <p class="group-label">// sensors</p>
+    <div class="tiles">
+      <div class="tile" data-sensor="dist" data-state="idle">
+        <span class="cap">Distance</span>
+        <span class="val" data-bind="dist">—</span>
+        <span class="note" data-bind="distNote">Waiting for data</span>
+      </div>
+      <div class="tile" data-sensor="temp" data-state="idle">
+        <span class="cap">Temperature</span>
+        <span class="val" data-bind="temp">—</span>
+        <span class="note" data-bind="tempNote">Waiting for data</span>
+      </div>
+      <div class="tile" data-sensor="hum" data-state="idle">
+        <span class="cap">Humidity</span>
+        <span class="val" data-bind="hum">—</span>
+        <span class="note" data-bind="humNote">Waiting for data</span>
+      </div>
+      <div class="tile" data-sensor="gas" data-state="idle">
+        <span class="cap">Gas</span>
+        <span class="val text" data-bind="gas">—</span>
+        <span class="note" data-bind="gasNote">Waiting for data</span>
+      </div>
+    </div>
+
+    <p class="group-label">// output devices</p>
+    <div class="outs">
+      <div class="out" data-output="buzzer" data-on="false"><span class="cap">Alarm buzzer</span><span class="val" data-bind="buzzer">OFF</span></div>
+      <div class="out" data-output="servo" data-on="false"><span class="cap">Servo (vent)</span><span class="val" data-bind="servo">—</span></div>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-datalog">
+  <section class="card datalog">
+    <div class="card-head">
+      <h2>Data log</h2>
+      <span class="meta">Saved every <b data-bind="logInterval">3 min</b></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date &amp; time</th><th>Distance</th><th>Presence</th><th>Temp</th><th>Humidity</th><th>Gas</th></tr></thead>
+        <tbody data-log-body><tr class="empty"><td colspan="6">No readings logged yet.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</template>
+
+<script>
+(() => {
+  'use strict';
+
+  document.getElementById('logout').addEventListener('click', async e => {
+    e.preventDefault();
+    try { await fetch('/api/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
+    window.location.href = '/login.html';
+  });
+
+  /* =====================================================================
+     CONFIG. Data comes from the website server: GET /api/state every POLL_MS,
+     commands go out with POST /api/command (the ESP-01 picks them up).
+     ===================================================================== */
+  const CONFIG = {
+    POLL_MS: 2000,
+    LOG_INTERVAL_MIN: 3,
+    PRESENCE_CM: 100,
+    THRESHOLDS: { tempHigh: 35, tempLow: 10, humHigh: 70, humLow: 30 }   // same as the Pro Mini config.h
+  };
+
+  /* ---------- state (filled from the server) ---------- */
+  const state = {
+    loaded: false,             // false until the first answer from the server
+    serverOk: true,
+    online: false,
+    lastSeen: null,
+    mode: 'AUTO',              // AUTO | MAINT | SLEEP
+    lastSleepChange: null,
+    live: null,
+    checks: {},
+    acks: {},
+    logs: [],
+    sleepLogs: [],
+    lv: 0, sv: 0,
+    clockOffset: 0,            // server time - browser time
+    sent: {},                  // name -> server time of the last command we sent
+    cmdVal: {},                // name -> last value we commanded in MAINTENANCE
+    servoEdit: null            // slider position the user moved but has not sent yet
+  };
+  const isSleep = () => state.mode === 'SLEEP';
+  const isMaint = () => state.mode === 'MAINT';
+
+  /* ---------- helpers ---------- */
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const pad = n => String(n).padStart(2, '0');
+  const fmtTime  = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+  const fmtDate  = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  const fmtStamp = t => `${fmtDate(t)} ${fmtTime(t)}`;
+  const nowMs = () => Date.now() + state.clockOffset;
+  const isNum = v => typeof v === 'number' && isFinite(v);
+  function fmtDuration(ms) {
+    const s = Math.max(0, Math.round(ms / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+    return h ? `${h}h ${pad(m)}m ${pad(x)}s` : m ? `${m}m ${pad(x)}s` : `${x}s`;
+  }
+  const bind = (name, text) => $$(`[data-bind="${name}"]`).forEach(el => { el.textContent = text; });
+
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 4000);
+  }
+
+  /* ---------- mount shared components ---------- */
+  $$('[data-slot]').forEach(slot => {
+    slot.appendChild($('#tpl-' + slot.dataset.slot).content.cloneNode(true));
+  });
+
+  /* ---------- rules ---------- */
+  function sensorStates(r) {
+    const T = CONFIG.THRESHOLDS;
+    return {
+      dist: !isNum(r.dist) ? 'idle' : (r.presence ? 'warn' : 'ok'),
+      temp: !isNum(r.temp) ? 'idle' : ((r.temp > T.tempHigh || r.temp < T.tempLow) ? 'warn' : 'ok'),
+      hum:  !isNum(r.hum)  ? 'idle' : ((r.hum > T.humHigh || r.hum < T.humLow) ? 'warn' : 'ok'),
+      gas:  !isNum(r.gas)  ? 'idle' : (r.gasAlert ? 'alert' : 'ok')
+    };
+  }
+
+  function recommendations(r) {
+    const T = CONFIG.THRESHOLDS, out = [];
+    if (r.gasAlert) out.push({ level: 'alert', title: 'Gas detected', text: 'Ventilate the area and check for leaks. The alarm buzzer is sounding and the vent (servo) opens.' });
+    if (isNum(r.temp) && r.temp > T.tempHigh) out.push({ level: 'warn', title: 'Temperature is high', text: `${r.temp.toFixed(1)}°C is above ${T.tempHigh}°C. Check for heat sources and improve ventilation.` });
+    if (isNum(r.temp) && r.temp < T.tempLow)  out.push({ level: 'warn', title: 'Temperature is low', text: `${r.temp.toFixed(1)}°C is below ${T.tempLow}°C. Check windows and heating.` });
+    if (isNum(r.hum) && r.hum > T.humHigh)    out.push({ level: 'warn', title: 'Humidity is high', text: `${Math.round(r.hum)}% is above ${T.humHigh}%. Ventilate the room to avoid condensation and mould.` });
+    if (isNum(r.hum) && r.hum < T.humLow)     out.push({ level: 'warn', title: 'Humidity is low', text: `${Math.round(r.hum)}% is below ${T.humLow}%. The air is dry; consider a humidifier.` });
+    if (r.presence) out.push({ level: 'info', title: 'Presence detected', text: `Something is ${r.dist} cm from the sensor. If you are not expecting anyone, check the area.` });
+    if (r.motion)   out.push({ level: 'info', title: 'Movement detected', text: 'The distance changed quickly between readings.' });
+    if (!isNum(r.temp) || !isNum(r.hum)) out.push({ level: 'warn', title: 'Temperature / humidity sensor not responding', text: 'The DHT22 gave no valid reading. Check its wiring and power.' });
+    if (!out.some(i => i.level === 'warn' || i.level === 'alert')) {
+      out.unshift({ level: 'ok', title: 'All readings normal', text: 'Temperature, humidity and gas are within safe ranges.' });
+    }
+    return out;
+  }
+
+  /* ---------- rendering ---------- */
+  function holdReason() {
+    if (isSleep()) return 'sleep';
+    if (isMaint()) return 'maintenance';
+    if (!state.serverOk) return 'server';
+    if (!state.online) return 'offline';
+    return '';
+  }
+
+  function renderDashboard() {
+    const r = state.live;
+    const st = r ? sensorStates(r) : { dist: 'idle', temp: 'idle', hum: 'idle', gas: 'idle' };
+    $$('.tile[data-sensor]').forEach(t => { t.dataset.state = st[t.dataset.sensor]; });
+
+    bind('dist', r && isNum(r.dist) ? `${r.dist} cm` : '—');
+    bind('distNote', !r ? 'Waiting for data' : !isNum(r.dist) ? 'No echo' : r.motion ? 'Movement detected' : r.presence ? 'Presence detected' : 'Clear');
+    bind('temp', r && isNum(r.temp) ? `${r.temp.toFixed(1)}°C` : '—');
+    bind('tempNote', !r ? 'Waiting for data' : !isNum(r.temp) ? 'No reading' : st.temp === 'ok' ? 'Normal' : (r.temp > CONFIG.THRESHOLDS.tempHigh ? 'Too high' : 'Too low'));
+    bind('hum', r && isNum(r.hum) ? `${Math.round(r.hum)}%` : '—');
+    bind('humNote', !r ? 'Waiting for data' : !isNum(r.hum) ? 'No reading' : st.hum === 'ok' ? 'Normal' : (r.hum > CONFIG.THRESHOLDS.humHigh ? 'Too high' : 'Too low'));
+    bind('gas', r && isNum(r.gas) ? (r.gasAlert ? 'DETECTED' : 'NONE') : '—');
+    bind('gasNote', !r || !isNum(r.gas) ? 'Waiting for data' : `Level ${r.gas} (${Math.round(r.gas * 100 / 1023)}%)`);
+
+    const hold = holdReason();
+    const upd = r ? fmtTime(r.ts) : null;
+    bind('updated', upd ? `${hold ? 'Last update' : 'Updated'} ${upd}` : 'Waiting for data…');
+    $$('[data-dashboard]').forEach(c => c.classList.toggle('held', !!hold));
+    const banners = {
+      sleep: 'No live data: the microcontroller is asleep. Showing the last known values.',
+      maintenance: 'Automatic operation is paused while maintenance mode is on.',
+      server: 'Cannot reach the website server. Showing the last known values.',
+      offline: 'The device is offline. Showing the last known values.'
+    };
+    $$('[data-hold-banner]').forEach(b => { b.hidden = !hold; b.textContent = banners[hold] || ''; });
+
+    const buzzerOn = (isMaint() && state.cmdVal.buzzer !== undefined) ? !!state.cmdVal.buzzer : !!(r && r.buzzer);
+    const servo = (isMaint() && state.cmdVal.servo !== undefined) ? state.cmdVal.servo : (r && isNum(r.servo) ? r.servo : null);
+    bind('buzzer', buzzerOn ? 'ON' : 'OFF');
+    bind('servo', servo === null ? '—' : `${servo}°`);
+    $$('[data-output]').forEach(el => {
+      const k = el.dataset.output;
+      el.dataset.on = String(k === 'servo' ? (servo !== null && servo > 0) : buzzerOn);
+    });
+  }
+
+  function renderRecs() {
+    const list = $('#rec-list');
+    list.innerHTML = '';
+    if (!state.live) {
+      list.innerHTML = '<li class="rec-empty">Recommendations will appear once readings arrive.</li>';
+      return;
+    }
+    recommendations(state.live).forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'rec';
+      li.dataset.level = item.level;
+      li.innerHTML = '<span class="rec-mark"></span><div><div class="rec-title"></div><div class="rec-text"></div></div>';
+      $('.rec-title', li).textContent = item.title;
+      $('.rec-text', li).textContent = item.text;
+      list.appendChild(li);
+    });
+  }
+
+  function addCells(tr, values) {
+    values.forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+  }
+
+  function renderLogs() {
+    bind('logInterval', `${CONFIG.LOG_INTERVAL_MIN} min`);
+    $$('[data-log-body]').forEach(tb => {
+      tb.innerHTML = '';
+      if (!state.logs.length) {
+        tb.innerHTML = '<tr class="empty"><td colspan="6">No readings logged yet.</td></tr>';
+        return;
+      }
+      state.logs.forEach(row => {
+        const st = sensorStates({ dist: row.dist, presence: row.presence, temp: row.temp, hum: row.hum, gas: row.gas, gasAlert: row.gasAlert });
+        const tr = document.createElement('tr');
+        if (st.temp === 'warn' || st.hum === 'warn' || st.gas === 'alert') tr.className = 'danger';
+        addCells(tr, [
+          fmtStamp(row.ts),
+          isNum(row.dist) ? `${row.dist} cm` : '—',
+          row.presence ? 'Yes' : 'No',
+          isNum(row.temp) ? `${row.temp.toFixed(1)}°C` : '—',
+          isNum(row.hum) ? `${Math.round(row.hum)}%` : '—',
+          isNum(row.gas) ? `${row.gas}${row.gasAlert ? ' (GAS)' : ''}` : '—'
+        ]);
+        tb.appendChild(tr);
+      });
+    });
+  }
+
+  function renderSleep() {
+    $('#sleep-status').dataset.asleep = String(isSleep());
+    bind('sleepState', isSleep() ? 'ASLEEP' : 'AWAKE');
+    bind('sleepChanged', state.lastSleepChange ? `Last changed ${fmtStamp(state.lastSleepChange)}` : 'No change recorded yet');
+    bind('sleepNote', isMaint() ? 'End maintenance mode before putting the device to sleep.' : (!state.online && !isSleep() ? 'The device is offline.' : ''));
+    $('#btn-sleep').disabled = isSleep() || isMaint() || !state.online;
+    $('#btn-wake').disabled = !isSleep() || !state.online;
+
+    const tb = $('#sleep-log-body');
+    tb.innerHTML = '';
+    if (!state.sleepLogs.length) {
+      tb.innerHTML = '<tr class="empty"><td colspan="3">No sleep periods recorded yet.</td></tr>';
+      return;
+    }
+    state.sleepLogs.forEach(s => {
+      const tr = document.createElement('tr');
+      addCells(tr, [fmtStamp(s.start), s.wake ? fmtStamp(s.wake) : 'Sleeping…', fmtDuration((s.wake || nowMs()) - s.start)]);
+      tb.appendChild(tr);
+    });
+  }
+
+  function cmdText(name) {
+    const sent = state.sent[name], ack = state.acks['SET:' + name];
+    if (!sent) return ack ? `Last ACK ${fmtTime(ack.ts)}` : 'No command sent yet';
+    if (ack && ack.ts >= sent - 50) return `Sent ${fmtTime(sent)} · ${ack.ok ? 'ACK received' : 'refused (ERR)'}`;
+    return `Sent ${fmtTime(sent)} · waiting for ACK…`;
+  }
+
+  function checkText(key) {
+    const c = state.checks[key];
+    if (!c) return { val: '—', when: 'Not checked yet' };
+    const unit = { temp: '°C', hum: '%', dist: ' cm', gas: '' }[key] || '';
+    const extra = (key === 'gas' && c.extra === '1') ? ' (GAS!)' : '';
+    return { val: `${c.value}${unit}${extra}`, when: `Checked ${fmtTime(c.ts)}` };
+  }
+
+  function renderMaint() {
+    const on = isMaint();
+    $('#maint-state').textContent = on ? 'ON — automatic operation paused' : 'OFF — automatic operation running';
+    const btn = $('#btn-maint');
+    btn.textContent = on ? 'End maintenance' : 'Start maintenance';
+    btn.disabled = isSleep() || !state.online;
+    bind('maintNote', isSleep() ? 'Wake the microcontroller before starting maintenance mode.' : (!state.online ? 'The device is offline.' : ''));
+
+    const unlocked = on && state.online;
+    $$('.lockable').forEach(c => {
+      c.classList.toggle('locked', !unlocked);
+      $$('button, input', c).forEach(el => { el.disabled = !unlocked; });
+    });
+
+    ['temp', 'hum', 'dist', 'gas'].forEach(k => {
+      const row = $(`[data-check="${k}"]`), t = checkText(k);
+      $('.chk-val', row).textContent = t.val;
+      $('.chk-when', row).textContent = t.when;
+    });
+
+    const buzzerOn = state.cmdVal.buzzer !== undefined ? !!state.cmdVal.buzzer : !!(state.live && state.live.buzzer);
+    $$('.seg').forEach(seg => {
+      $$('.seg-btn', seg).forEach(b => b.classList.toggle('on', (b.dataset.val === '1') === buzzerOn));
+    });
+
+    const range = $('#servo-range');
+    if (document.activeElement !== range) {
+      range.value = state.servoEdit !== null ? state.servoEdit
+        : state.cmdVal.servo !== undefined ? state.cmdVal.servo
+        : (state.live && isNum(state.live.servo) ? state.live.servo : 0);
+    }
+    $('#servo-val').textContent = `${range.value}°`;
+    $('[data-cmd="buzzer"]').textContent = cmdText('buzzer');
+    $('[data-cmd="servo"]').textContent = cmdText('servo');
+  }
+
+  function renderHeader() {
+    const pill = $('#online-pill');
+    const up = state.serverOk && state.online;
+    pill.dataset.online = String(up || !state.loaded);
+    $('#online-text').textContent = !state.loaded ? 'Connecting…' : !state.serverOk ? 'Server unreachable' : state.online ? 'Online' : 'Offline';
+    const m = !state.lastSeen ? '—' : ({ AUTO: 'AUTO', MAINT: 'MAINTENANCE', SLEEP: 'SLEEP' }[state.mode] || state.mode);
+    const key = isSleep() ? 'sleep' : isMaint() ? 'maintenance' : 'auto';
+    $('#mode-pill').dataset.mode = key;
+    $('#mode-pill-text').textContent = m;
+    $$('.tab-btn').forEach(b => { b.dataset.active = String(state.lastSeen && b.dataset.panel === key ? true : false); });
+  }
+
+  function renderAll() {
+    renderHeader(); renderDashboard(); renderRecs(); renderLogs(); renderSleep(); renderMaint();
+  }
+
+  /* ---------- tabs ---------- */
+  let activePanel = 'auto';
+  function showPanel(name) {
+    activePanel = name;
+    $$('.tab-btn').forEach(b => b.setAttribute('aria-selected', String(b.dataset.panel === name)));
+    $$('.panel').forEach(p => {
+      const on = p.dataset.panel === name;
+      p.classList.toggle('active', on);
+      p.hidden = !on;
+    });
+  }
+  $$('.tab-btn').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.panel)));
+
+  /* ---------- talking to the server ---------- */
+  function applyState(s) {
+    const wasAsleep = isSleep();
+    state.loaded = true;
+    state.serverOk = true;
+    state.clockOffset = s.serverTime - Date.now();
+    state.online = s.online;
+    state.lastSeen = s.lastSeen;
+    state.mode = s.mode;
+    state.lastSleepChange = s.lastSleepChange;
+    state.live = s.live;
+    state.checks = s.checks || {};
+    state.acks = s.acks || {};
+    if (s.logs) { state.logs = s.logs; }
+    state.lv = s.logVersion;
+    if (s.sleepLogs) { state.sleepLogs = s.sleepLogs; }
+    state.sv = s.sleepVersion;
+    if (s.device) {
+      $('#device-name').textContent = s.device.name;
+      $('#device-id').textContent = s.device.id;
+    }
+    if (!isMaint()) { state.cmdVal = {}; state.servoEdit = null; }   // manual test values only live inside MAINTENANCE
+    if (wasAsleep && !isSleep() && activePanel === 'sleep') showPanel('auto');   // waking returns to AUTO
+    renderAll();
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch(`/api/state?lv=${state.lv}&sv=${state.sv}`, { cache: 'no-store' });
+      if (res.status === 401) { window.location.href = '/login.html'; return; }
+      applyState(await res.json());
+    } catch (err) {
+      state.loaded = true;
+      state.serverOk = false;
+      renderAll();
+    }
+  }
+
+  async function sendCommand(body) {
+    try {
+      const res = await fetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (res.status === 401) { window.location.href = '/login.html'; return null; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { toast(data.error || 'The command was not accepted.'); return null; }
+      setTimeout(poll, 700);                           // the ESP picks it up within ~2 s
+      setTimeout(poll, 2600);
+      return data;
+    } catch (err) {
+      toast('Cannot reach the website server.');
+      return null;
+    }
+  }
+
+  /* ---------- actions ---------- */
+  const setMaintenance = on => sendCommand({ cmd: 'mode', value: on ? 'MAINT' : 'AUTO' });
+  const sleepNow = () => sendCommand({ cmd: 'mode', value: 'SLEEP' });
+  const wakeNow  = () => sendCommand({ cmd: 'wake' });
+
+  async function setActuator(name, value) {
+    const res = await sendCommand({ cmd: 'set', name, value });
+    if (res) {
+      state.sent[name] = res.ts;
+      state.cmdVal[name] = name === 'servo' ? Number(value) : (value ? 1 : 0);
+      if (name === 'servo') state.servoEdit = null;
+      renderAll();
+    }
+  }
+
+  /* ---------- wiring ---------- */
+  $('#btn-maint').addEventListener('click', () => setMaintenance(!isMaint()));
+  $('#btn-sleep').addEventListener('click', sleepNow);
+  $('#btn-wake').addEventListener('click', wakeNow);
+  $$('[data-read]').forEach(b => b.addEventListener('click', () => sendCommand({ cmd: 'read', sensor: b.dataset.read })));
+  $('#btn-read-all').addEventListener('click', () => sendCommand({ cmd: 'read', sensor: 'all' }));
+  $$('.seg-btn').forEach(b => b.addEventListener('click', () => setActuator(b.closest('.seg').dataset.actuator, b.dataset.val === '1')));
+  $('#servo-range').addEventListener('input', e => { state.servoEdit = Number(e.target.value); $('#servo-val').textContent = `${e.target.value}°`; });
+  $('#btn-servo-send').addEventListener('click', () => setActuator('servo', $('#servo-range').value));
+
+  setInterval(() => { if (isSleep()) renderSleep(); }, 1000);    // live "sleeping" duration
+  setInterval(poll, CONFIG.POLL_MS);
+
+  renderAll();
+  poll();
+})();
+</script>
+
+</body>
+</html>
